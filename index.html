@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRYFIRE — eight bullets, forever</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23090b10'/><rect x='13' y='6' width='6' height='14' rx='2' fill='%23ffc843'/><circle cx='16' cy='24' r='3' fill='%23ff4f6d'/></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="frame">
+  <canvas id="game" width="960" height="600"></canvas>
+
+  <div id="hud" class="hidden">
+    <div id="hud-left">
+      <div id="hearts"></div>
+      <div id="ammo"></div>
+    </div>
+    <div id="hud-right">
+      <div id="score">0</div>
+      <div id="combo"></div>
+      <div id="wave"></div>
+    </div>
+  </div>
+
+  <div id="title" class="screen">
+    <h1>DRY<span>FIRE</span></h1>
+    <p class="tag">eight bullets, forever.</p>
+    <div class="rules">
+      <p><b>There are no movement keys.</b> Your gun is your engine — every shot kicks you backwards.</p>
+      <p>Every shot drops a casing. The world holds <b>exactly 8 bullets</b> — skate over your spent shells to reload.</p>
+      <p><b>Squares eat your casings.</b> Pop one to get them all back.</p>
+      <p>Empty mag? Your shells crawl home to you... slowly. Getting hit hurts, but the knockback is free travel.</p>
+    </div>
+    <p class="controls">aim with mouse &nbsp;·&nbsp; click to fire &nbsp;·&nbsp; <kbd>P</kbd> pause &nbsp;·&nbsp; <kbd>M</kbd> mute</p>
+    <p class="go">click to load</p>
+    <p class="best" id="title-best"></p>
+  </div>
+
+  <div id="death" class="screen hidden">
+    <h1>SPENT</h1>
+    <p class="tag" id="death-stats"></p>
+    <p class="best" id="death-best"></p>
+    <p class="go">click to reload</p>
+  </div>
+
+  <div id="pause" class="screen hidden">
+    <h1>HOLD</h1>
+    <p class="go">press P to resume</p>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
