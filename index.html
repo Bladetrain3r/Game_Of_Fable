@@ -48,6 +48,12 @@
     <h1>SPENT</h1>
     <p class="tag" id="death-stats"></p>
     <p class="best" id="death-best"></p>
+    <div id="entry" class="hidden">
+      <p class="tag" id="entry-msg">you made the board — initials?</p>
+      <input id="initials" maxlength="3" autocomplete="off" spellcheck="false" placeholder="AAA">
+      <p class="controls"><kbd>Enter</kbd> to claim it &nbsp;·&nbsp; <kbd>Esc</kbd> to stay anonymous</p>
+    </div>
+    <ol id="board" class="hidden"></ol>
     <p class="go">click to reload</p>
     <p class="controls"><kbd>Esc</kbd> for the menu</p>
   </div>
@@ -61,6 +67,7 @@
 <script src="js/audio.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/render.js"></script>
+<script src="js/scores.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -5,15 +5,32 @@ All notable changes to DRYFIRE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v1.2 "The Leaderboard Update"
+## [Unreleased] — v1.3+ candidates
 
-### Planned
+Feature complete as of v1.2 — these are nice-to-haves, weighed against
+diluting the core.
 
-- [ ] Server-side high score board: top 10, stored in a plain text file on the
-      host (created if absent, so a daily cron wipe just resets the board)
-- [ ] Qualifying players are prompted for initials on death
-- [ ] Game stays fully playable as a pure static site when no score endpoint
-      is reachable (local bests remain the fallback)
+- [ ] Additional enemy types
+- [ ] Pickups
+- [ ] Procedurally generated ambient music (low-tempo bliptune, WebAudio)
+
+## [1.2.0] - 2026-06-10 — "The Leaderboard Update"
+
+### Added
+
+- Server-side high score board: top 10, stored as a human-readable plain text
+  file (`SCORE INITIALS DIFFICULTY` per line) on the host
+- `server/hiscore_server.py` — stdlib-only Python servlet (~100 lines) serving
+  `GET /board` and `POST /score` on port 8002; recreates the score file if
+  absent, so a daily cron wipe just resets the board
+- Arcade-style initials entry (3 chars, A–Z/0–9) on death for qualifying
+  scores; new entries are highlighted on the board
+- Client probe order: static `hiscores.txt` fetch first, then the :8002
+  listener as a self-healing fallback; on a fully static host the game
+  silently stays in local-bests mode
+- Server-side validation: initials format, score bounds, known difficulty;
+  valid-but-not-qualifying scores get a 200 with `qualified: false`
+- Practice runs (0× score) never prompt for the board
 
 ## [1.1.0] - 2026-06-10 — "The Difficulty Update"
 
