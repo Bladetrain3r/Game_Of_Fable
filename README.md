@@ -1,0 +1,78 @@
+# DRYFIRE
+
+*eight bullets, forever.*
+
+A top-down arena shooter where **your gun is your only engine** and **the world
+contains exactly eight bullets** — total, permanent, conserved.
+
+**[Play it: open `index.html`. That's the whole install.]**
+
+## The idea
+
+Three rules, each of which fights the other two:
+
+1. **There are no movement keys.** Every shot kicks you backwards. Recoil is
+   locomotion. You aim where you *don't* want to go.
+2. **Every shot ejects a casing onto the floor, and casings are the only ammo
+   in the world.** Eight shells, conserved across the whole run. Skate over
+   your spent brass to reload — which means shooting to survive propels you
+   *away* from your own ammo supply.
+3. **The purple squares don't want you. They want your brass.** Magnets vacuum
+   casings off the floor and carry them around inside. Pop one and it refunds
+   everything it swallowed. Your economy can be taken hostage.
+
+Two pressure valves keep it fair instead of frustrating:
+
+- **Empty mag?** Your shells slowly crawl home to you — slow enough to be
+  terrifying, sure enough that you can never be soft-locked.
+- **Pain is propulsion.** Getting hit costs a heart but launches you flying —
+  sometimes straight through the brass you needed.
+
+## Controls
+
+| Input | Action |
+|-------|--------|
+| Mouse | Aim |
+| Click / hold | Fire (and therefore: move) |
+| `P` | Pause |
+| `M` | Mute |
+
+Kills chain into a combo (up to ×8). Kills made while moving fast pay a 50%
+**HOT** bonus — the game pays you to stay reckless.
+
+## Enemies
+
+- **Triangles (drifters)** — fast, wobbling chasers. Fodder that herds you.
+- **Squares (magnets)** — ignore you, eat your casings, grow. Kill = full refund.
+- **Hexagons (mass)** — slow, four hits, soak bullets and block lanes.
+
+## Running it
+
+It's a static site with zero dependencies and zero build step:
+
+```sh
+# any of these:
+open index.html                    # works straight from file://
+python3 -m http.server             # or any static server
+# or push to GitHub Pages and point it at the repo root
+```
+
+## Construction
+
+Built Magic Launcher style:
+
+- **No frameworks, no libraries, no build, no assets.** Vanilla JS, Canvas 2D,
+  WebAudio (every sound is synthesized at runtime), CSS for the menus.
+- **Every file under 500 lines** (largest is `js/main.js` at ~300).
+- **Composition over inheritance:** entities are plain objects made by factory
+  functions; behavior lives in small update systems that operate on them.
+  There is not a single `class` in the codebase.
+
+| File | Role |
+|------|------|
+| `index.html` | Shell, HUD, title/death/pause screens |
+| `style.css` | Theme |
+| `js/audio.js` | Synthesized SFX (WebAudio, no files) |
+| `js/entities.js` | Factories + update systems (physics, AI, conservation) |
+| `js/render.js` | Pure draw functions |
+| `js/main.js` | Game state, input, firing, collisions, waves |
