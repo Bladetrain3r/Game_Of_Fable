@@ -161,6 +161,50 @@ kbd {
   background: rgba(255, 79, 109, 0.12);
 }
 
+/* ---- hiscore board + initials entry ---- */
+#entry { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+#initials {
+  font-family: inherit;
+  width: 120px;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 12px;
+  text-indent: 12px;       /* visually recenters the letter-spaced text */
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(255, 200, 67, 0.06);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  outline: none;
+  caret-color: var(--gold);
+}
+#initials::placeholder { color: rgba(255, 200, 67, 0.25); }
+
+#board {
+  list-style: none;
+  counter-reset: rank;
+  width: min(360px, 90%);
+  font-size: 14px;
+}
+
+#board li {
+  counter-increment: rank;
+  display: flex;
+  gap: 14px;
+  padding: 2px 10px;
+}
+#board li::before {
+  content: counter(rank, decimal-leading-zero);
+  color: var(--dim);
+}
+#board li .ini { color: var(--gold); font-weight: bold; min-width: 42px; text-align: left; }
+#board li .pts { flex: 1; text-align: right; }
+#board li .dif { color: var(--dim); min-width: 70px; text-align: right; }
+#board li.fresh { background: rgba(255, 200, 67, 0.12); border-radius: 3px; }
+
 .go {
   margin-top: 10px;
   color: var(--cyan);

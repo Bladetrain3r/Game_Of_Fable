@@ -64,6 +64,28 @@ Best scores are tracked per difficulty.
 - **Squares (magnets)** — ignore you, eat your casings, grow. Kill = full refund.
 - **Hexagons (mass)** — slow, four hits, soak bullets and block lanes.
 
+## High score board (optional)
+
+The game is leaderboard-aware but never leaderboard-dependent. On boot it
+looks for `hiscores.txt` on the same origin (falling back to a listener on
+port `8002`); if neither exists, it quietly stays in local-bests mode and
+nothing changes. When the board is live, dying with a qualifying score gets
+you the classic three-initials prompt.
+
+To host the board, run the stdlib-only servlet next to your static server:
+
+```sh
+python3 server/hiscore_server.py 8002 /path/to/webroot/hiscores.txt
+```
+
+- The score file is plain text (`SCORE INITIALS DIFFICULTY` per line) and is
+  recreated if missing — a daily `rm` from cron resets the board.
+- If the site is served over HTTPS, the `:8002` listener must be too (e.g.
+  TLS-terminated at a load balancer), or browsers will block the call as
+  mixed content.
+- The servlet validates everything and answers `200` with
+  `qualified: false` for honest scores that miss the cut.
+
 ## Running it
 
 It's a static site with zero dependencies and zero build step:

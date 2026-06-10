@@ -71,7 +71,12 @@ window.addEventListener("mousemove", (ev) => { mouse = { ...mouse, ...canvasPos(
 window.addEventListener("mousedown", (ev) => {
   Audio_.unlock();
   mouse = { ...canvasPos(ev), down: true };
-  if (state === "dead" && elapsed - diedAt > 0.7) { startRun(lastDiffKey); return; }
+  if (state === "dead") {
+    // don't let a stray click eat a board-qualifying run, or a click in the form restart
+    if (ev.target.closest("#entry") || !$("entry").classList.contains("hidden")) return;
+    if (elapsed - diedAt > 0.7) startRun(lastDiffKey);
+    return;
+  }
   if (state === "playing") {  // fire on the event itself; polling alone can miss fast clicks
     const p = game.player;
     p.aim = Math.atan2(mouse.y - p.y, mouse.x - p.x);
@@ -232,7 +237,71 @@ function endRun(g) {
   $("death-best").textContent = `${g.diff.label} best: ${best}`;
   $("death").classList.remove("hidden");
   $("hud").classList.add("hidden");
+  setupDeathBoard(g);
 }
+
+// ---------- online leaderboard (absent on static-only hosting) ----------
+
+function renderBoard(highlight) {
+  const el = $("board");
+  el.innerHTML = "";
+  for (const e of Scores.board) {
+    const li = document.createElement("li");
+    for (const [cls, text] of [["ini", e.initials], ["pts", e.score], ["dif", e.diff]]) {
+      const span = document.createElement("span");
+      span.className = cls;
+      span.textContent = text;
+      li.appendChild(span);
+    }
+    if (highlight && e.initials === highlight.initials && e.score === highlight.score) {
+      li.classList.add("fresh");
+      highlight = null;  // only flag the first match
+    }
+    el.appendChild(li);
+  }
+  el.classList.toggle("hidden", Scores.board.length === 0);
+}
+
+async function setupDeathBoard(g) {
+  $("entry").classList.add("hidden");
+  $("board").classList.add("hidden");
+  await Scores.refresh();
+  if (state !== "dead" || game !== g) return;  // player already moved on
+  if (!Scores.enabled) return;
+  renderBoard(null);
+  if (g.diff.scoreMult > 0 && Scores.qualifies(g.score)) {
+    $("entry-msg").textContent = "you made the board — initials?";
+    const input = $("initials");
+    input.value = "";
+    input.disabled = false;
+    $("entry").classList.remove("hidden");
+    input.focus();
+  }
+}
+
+const initialsInput = $("initials");
+initialsInput.addEventListener("input", () => {
+  initialsInput.value = initialsInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+});
+initialsInput.addEventListener("keydown", async (ev) => {
+  ev.stopPropagation();  // typing must not trigger global shortcuts (1-5 restarts!)
+  if (ev.key === "Escape") { $("entry").classList.add("hidden"); return; }
+  if (ev.key !== "Enter" || initialsInput.value.length === 0 || !game) return;
+  const g = game;
+  initialsInput.disabled = true;
+  $("entry-msg").textContent = "etching it in...";
+  const res = await Scores.submit(initialsInput.value, g.score, g.diffKey);
+  if (state !== "dead" || game !== g) return;
+  $("entry").classList.add("hidden");
+  if (res.ok) {
+    renderBoard(res.qualified ? { initials: initialsInput.value, score: g.score } : null);
+    if (res.qualified) Audio_.play("refund");
+    $("death-best").textContent += res.qualified
+      ? ` · board #${res.rank}` : " · sniped off the board";
+  } else {
+    $("death-best").textContent += " · board unreachable";
+  }
+});
 
 function collide(g) {
   const p = g.player;
@@ -355,4 +424,5 @@ function frame(time) {
 }
 
 $("title-best").textContent = bestLine();
+Scores.refresh();  // fire-and-forget probe; offline hosting just stays local
 requestAnimationFrame(frame);

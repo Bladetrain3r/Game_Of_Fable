@@ -5,15 +5,62 @@ All notable changes to DRYFIRE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v1.2 "The Leaderboard Update"
+## Roadmap
 
-### Planned
+Three patches reserved; v1.5 is the final game. Every addition is weighed
+against the core: one gun, N bullets, forever. Conservation stays sacred —
+nothing on this list creates ammo. Out of scope on principle: bosses,
+weapon variety, upgrade meta.
 
-- [ ] Server-side high score board: top 10, stored in a plain text file on the
-      host (created if absent, so a daily cron wipe just resets the board)
-- [ ] Qualifying players are prompted for initials on death
-- [ ] Game stays fully playable as a pure static site when no score endpoint
-      is reachable (local bests remain the fallback)
+### [Unreleased] — v1.3 "The Menagerie"
+
+- [ ] **Warden** — frontal shield eats bullets; only killable from behind.
+      A recoil-piloting exam: you spend shells to *position*, not just kill
+- [ ] **Shrike** — a shooter. Its projectiles are visually distinct from
+      brass (energy, not casings) and never pickupable; enemy fire stays
+      outside the ammo economy
+- [ ] Wave roster rebalance to weave the new threats in
+
+### Reserved — v1.4 "The Arsenal"
+
+Utility-only pickups, all temporal, none create ammo. Earned via HOT kills
+and wave clears, rewarding the playstyle scoring already encourages.
+
+- [ ] **Lodestone** — for ~5s every floor shell crawls to you (the
+      empty-mag mercy, weaponized as a reward)
+- [ ] **Overpressure** — next shot pierces and double-kicks
+- [ ] **Patch kit** — one heart back; rare, wave-clear only
+
+### Reserved — v1.5 "The Encore"
+
+- [ ] Procedurally generated ambient bliptune (WebAudio, zero assets):
+      pentatonic random walk over a slow pad, reactive to game state —
+      busier with combo, *tenser* on low ammo. The soundtrack as a
+      tension gauge you hear instead of read
+- [ ] Daily seed mode: wave RNG seeded by the date, posted to the board
+      with a `daily` tag — the existing cron wipe becomes a daily
+      challenge reset where everyone faced the same spawns
+- [ ] Death-screen stats: accuracy, distance flown
+- [ ] Touch support (tap to fire — the one-button game gets it nearly free)
+- [ ] Feature freeze
+
+## [1.2.0] - 2026-06-10 — "The Leaderboard Update"
+
+### Added
+
+- Server-side high score board: top 10, stored as a human-readable plain text
+  file (`SCORE INITIALS DIFFICULTY` per line) on the host
+- `server/hiscore_server.py` — stdlib-only Python servlet (~100 lines) serving
+  `GET /board` and `POST /score` on port 8002; recreates the score file if
+  absent, so a daily cron wipe just resets the board
+- Arcade-style initials entry (3 chars, A–Z/0–9) on death for qualifying
+  scores; new entries are highlighted on the board
+- Client probe order: static `hiscores.txt` fetch first, then the :8002
+  listener as a self-healing fallback; on a fully static host the game
+  silently stays in local-bests mode
+- Server-side validation: initials format, score bounds, known difficulty;
+  valid-but-not-qualifying scores get a 200 with `qualified: false`
+- Practice runs (0× score) never prompt for the board
 
 ## [1.1.0] - 2026-06-10 — "The Difficulty Update"
 
