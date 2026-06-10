@@ -10,21 +10,54 @@ const FIRE_COOLDOWN = 0.16;
 const COMBO_WINDOW = 2.5;
 const HOT_SPEED = 330;       // kills above this speed pay 50% extra
 
+// The whole difficulty system is this table. The conservation rule is sacred
+// in every mode — harder just means the universe holds fewer bullets.
+const DIFFICULTIES = {
+  practice: { label: "practice", ammo: 16, attractAt: 0, scoreMult: 0,   hpBonus: 0, enemies: false },
+  easy:     { label: "easy",     ammo: 12, attractAt: 1, scoreMult: 0.5, hpBonus: 0, enemies: true },
+  normal:   { label: "normal",   ammo: 8,  attractAt: 0, scoreMult: 1,   hpBonus: 0, enemies: true },
+  hard:     { label: "hard",     ammo: 6,  attractAt: 0, scoreMult: 1.5, hpBonus: 0, enemies: true },
+  suicidal: { label: "suicidal", ammo: 4,  attractAt: 0, scoreMult: 1.5, hpBonus: 1, enemies: true },
+};
+
 let game = null;
 let state = "title";         // title | playing | paused | dead
 let mouse = { x: W / 2, y: H / 2, down: false };
 let lastTime = 0;
 let elapsed = 0;
+let lastDiffKey = "normal";
+let diedAt = -10;            // swallow frantic clicks right after death
 
-function newGame() {
+function newGame(diffKey) {
+  const diff = DIFFICULTIES[diffKey];
   return {
-    player: makePlayer(),
+    diff, diffKey,
+    player: makePlayer(diff.ammo),
     bullets: [], casings: [], enemies: [], particles: [], floaters: [], spawns: [],
     trail: [],
     wave: 0, waveTimer: 1.2, betweenWaves: true,
     score: 0, combo: 1, comboTimer: 0, kills: 0,
-    shake: 0,
+    dist: 0, shake: 0,
   };
+}
+
+// ---------- best scores (per difficulty) ----------
+
+const bestKey = (k) => `dryfire-best-${k}`;
+{ // one-time migration: the v1.0 best becomes the Normal best
+  const old = localStorage.getItem("dryfire-best");
+  if (old && !localStorage.getItem(bestKey("normal"))) {
+    localStorage.setItem(bestKey("normal"), old);
+  }
+}
+
+function bestLine() {
+  const parts = [];
+  for (const k of Object.keys(DIFFICULTIES)) {
+    const v = localStorage.getItem(bestKey(k));
+    if (v) parts.push(`${DIFFICULTIES[k].label} ${v}`);
+  }
+  return parts.length ? "best — " + parts.join(" · ") : "";
 }
 
 // ---------- input ----------
@@ -38,7 +71,7 @@ window.addEventListener("mousemove", (ev) => { mouse = { ...mouse, ...canvasPos(
 window.addEventListener("mousedown", (ev) => {
   Audio_.unlock();
   mouse = { ...canvasPos(ev), down: true };
-  if (state === "title" || state === "dead") { startRun(); return; }
+  if (state === "dead" && elapsed - diedAt > 0.7) { startRun(lastDiffKey); return; }
   if (state === "playing") {  // fire on the event itself; polling alone can miss fast clicks
     const p = game.player;
     p.aim = Math.atan2(mouse.y - p.y, mouse.x - p.x);
@@ -55,15 +88,37 @@ window.addEventListener("keydown", (ev) => {
     state = state === "playing" ? "paused" : "playing";
     $("pause").classList.toggle("hidden", state === "playing");
   }
+  if (k === "escape" && state !== "title") toTitle();
+  if (state === "title" || state === "dead") {
+    const keys = Object.keys(DIFFICULTIES);
+    const n = parseInt(k, 10);
+    if (n >= 1 && n <= keys.length) startRun(keys[n - 1]);
+  }
 });
 
-function startRun() {
-  game = newGame();
+function toTitle() {
+  game = null;
+  state = "title";
+  $("pause").classList.add("hidden");
+  $("death").classList.add("hidden");
+  $("hud").classList.add("hidden");
+  $("title").classList.remove("hidden");
+  $("title-best").textContent = bestLine();
+}
+
+function startRun(diffKey) {
+  lastDiffKey = diffKey;
+  game = newGame(diffKey);
   game.player.fireCooldown = 0.35;  // the starting click shouldn't waste a shot
   state = "playing";
   $("title").classList.add("hidden");
   $("death").classList.add("hidden");
+  $("pause").classList.add("hidden");
   $("hud").classList.remove("hidden");
+}
+
+for (const btn of document.querySelectorAll("#diffs button")) {
+  btn.addEventListener("click", () => startRun(btn.dataset.diff));
 }
 
 // ---------- firing ----------
@@ -114,7 +169,7 @@ function updateSpawns(g, dt) {
     s.timer -= dt;
     if (s.timer <= 0) {
       s.dead = true;
-      g.enemies.push(makeEnemy(s.kind, s.x, s.y, g.wave));
+      g.enemies.push(makeEnemy(s.kind, s.x, s.y, g.wave, g.diff.hpBonus));
     }
   }
   sweepDead(g.spawns);
@@ -131,7 +186,7 @@ function killEnemy(g, e) {
   g.kills++;
   const p = g.player;
   const hot = len(p.vx, p.vy) > HOT_SPEED;
-  const points = Math.round(e.score * g.combo * (hot ? 1.5 : 1));
+  const points = Math.round(e.score * g.combo * (hot ? 1.5 : 1) * g.diff.scoreMult);
   g.score += points;
   g.combo = Math.min(8, g.combo + 1);
   g.comboTimer = COMBO_WINDOW;
@@ -169,11 +224,12 @@ function hurtPlayer(g, e) {
 
 function endRun(g) {
   state = "dead";
+  diedAt = elapsed;
   Audio_.play("die");
-  const best = Math.max(g.score, Number(localStorage.getItem("dryfire-best") || 0));
-  localStorage.setItem("dryfire-best", String(best));
-  $("death-stats").textContent = `${g.score} pts · wave ${g.wave} · ${g.kills} kills`;
-  $("death-best").textContent = `best: ${best}`;
+  const best = Math.max(g.score, Number(localStorage.getItem(bestKey(g.diffKey)) || 0));
+  if (g.diff.scoreMult > 0) localStorage.setItem(bestKey(g.diffKey), String(best));
+  $("death-stats").textContent = `${g.score} pts · ${g.diff.label} · wave ${g.wave} · ${g.kills} kills`;
+  $("death-best").textContent = `${g.diff.label} best: ${best}`;
   $("death").classList.remove("hidden");
   $("hud").classList.add("hidden");
 }
@@ -220,18 +276,27 @@ function collide(g) {
 
 function updateHud(g) {
   const p = g.player;
-  $("hearts").textContent = "♥".repeat(p.hp) + "♡".repeat(Math.max(0, 3 - p.hp));
+  const maxAmmo = g.diff.ammo;
+  $("hearts").textContent = g.diff.enemies
+    ? "♥".repeat(p.hp) + "♡".repeat(Math.max(0, 3 - p.hp)) : "";
   const ammoEl = $("ammo");
-  if (ammoEl.childElementCount !== TOTAL_AMMO) {
+  if (ammoEl.childElementCount !== maxAmmo) {
     ammoEl.innerHTML = "";
-    for (let i = 0; i < TOTAL_AMMO; i++) ammoEl.appendChild(document.createElement("div"));
+    for (let i = 0; i < maxAmmo; i++) ammoEl.appendChild(document.createElement("div"));
   }
-  for (let i = 0; i < TOTAL_AMMO; i++) {
+  for (let i = 0; i < maxAmmo; i++) {
     ammoEl.children[i].className = "pip" + (i < p.ammo ? "" : " empty");
   }
-  $("score").textContent = g.score;
-  $("combo").textContent = g.combo > 1 ? `x${g.combo} combo` : "";
-  $("wave").textContent = g.betweenWaves && g.wave > 0 ? "wave cleared" : `wave ${g.wave}`;
+  if (g.diff.enemies) {
+    $("score").textContent = g.score;
+    $("combo").textContent = g.combo > 1 ? `x${g.combo} combo` : "";
+    const waveText = g.betweenWaves && g.wave > 0 ? "wave cleared" : `wave ${g.wave}`;
+    $("wave").textContent = `${waveText} · ${g.diff.label}`;
+  } else {  // practice: a recoil-flight odometer instead of a score
+    $("score").textContent = `${Math.round(g.dist / 48)}m`;
+    $("combo").textContent = "";
+    $("wave").textContent = "practice · esc exits";
+  }
 }
 
 // ---------- main loop ----------
@@ -242,11 +307,12 @@ function update(g, dt) {
   if (mouse.down) tryFire(g);
 
   updatePlayer(p, dt, () => Audio_.play("bounce"));
+  g.dist += len(p.vx, p.vy) * dt;
   g.trail.push({ x: p.x, y: p.y });
   if (g.trail.length > 18) g.trail.shift();
 
   updateBullets(g.bullets, dt);
-  updateCasings(g.casings, p, dt, p.ammo === 0 && g.bullets.length === 0);
+  updateCasings(g.casings, p, dt, p.ammo <= g.diff.attractAt && g.bullets.length === 0);
 
   const events = [];
   updateEnemies(g.enemies, g.casings, p, dt, events);
@@ -264,7 +330,7 @@ function update(g, dt) {
   g.shake = Math.max(0, g.shake - dt * 3);
 
   // wave pacing
-  if (g.enemies.length === 0 && g.spawns.length === 0) {
+  if (g.diff.enemies && g.enemies.length === 0 && g.spawns.length === 0) {
     if (!g.betweenWaves) { g.betweenWaves = true; g.waveTimer = 2.2; }
     g.waveTimer -= dt;
     if (g.waveTimer <= 0) { g.betweenWaves = false; queueWave(g); }
@@ -288,6 +354,5 @@ function frame(time) {
   requestAnimationFrame(frame);
 }
 
-const storedBest = localStorage.getItem("dryfire-best");
-if (storedBest) $("title-best").textContent = `best: ${storedBest}`;
+$("title-best").textContent = bestLine();
 requestAnimationFrame(frame);
