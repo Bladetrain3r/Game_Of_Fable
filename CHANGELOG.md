@@ -5,14 +5,44 @@ All notable changes to DRYFIRE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v1.3+ candidates
+## Roadmap
 
-Feature complete as of v1.2 — these are nice-to-haves, weighed against
-diluting the core.
+Three patches reserved; v1.5 is the final game. Every addition is weighed
+against the core: one gun, N bullets, forever. Conservation stays sacred —
+nothing on this list creates ammo. Out of scope on principle: bosses,
+weapon variety, upgrade meta.
 
-- [ ] Additional enemy types
-- [ ] Pickups
-- [ ] Procedurally generated ambient music (low-tempo bliptune, WebAudio)
+### [Unreleased] — v1.3 "The Menagerie"
+
+- [ ] **Warden** — frontal shield eats bullets; only killable from behind.
+      A recoil-piloting exam: you spend shells to *position*, not just kill
+- [ ] **Shrike** — a shooter. Its projectiles are visually distinct from
+      brass (energy, not casings) and never pickupable; enemy fire stays
+      outside the ammo economy
+- [ ] Wave roster rebalance to weave the new threats in
+
+### Reserved — v1.4 "The Arsenal"
+
+Utility-only pickups, all temporal, none create ammo. Earned via HOT kills
+and wave clears, rewarding the playstyle scoring already encourages.
+
+- [ ] **Lodestone** — for ~5s every floor shell crawls to you (the
+      empty-mag mercy, weaponized as a reward)
+- [ ] **Overpressure** — next shot pierces and double-kicks
+- [ ] **Patch kit** — one heart back; rare, wave-clear only
+
+### Reserved — v1.5 "The Encore"
+
+- [ ] Procedurally generated ambient bliptune (WebAudio, zero assets):
+      pentatonic random walk over a slow pad, reactive to game state —
+      busier with combo, *tenser* on low ammo. The soundtrack as a
+      tension gauge you hear instead of read
+- [ ] Daily seed mode: wave RNG seeded by the date, posted to the board
+      with a `daily` tag — the existing cron wipe becomes a daily
+      challenge reset where everyone faced the same spawns
+- [ ] Death-screen stats: accuracy, distance flown
+- [ ] Touch support (tap to fire — the one-button game gets it nearly free)
+- [ ] Feature freeze
 
 ## [1.2.0] - 2026-06-10 — "The Leaderboard Update"
 
