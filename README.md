@@ -6,6 +6,7 @@ A top-down arena shooter where **your gun is your only engine** and **the world
 contains exactly eight bullets** — total, permanent, conserved.
 
 **[Play it: open `index.html`. That's the whole install.]**
+**Also available at: https://dryfire.zerofuchs.net:444/**
 
 ## The idea
 
