@@ -2,7 +2,6 @@
 "use strict";
 
 const W = 960, H = 600, WALL = 14;
-const TOTAL_AMMO = 8;
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const dist2 = (a, b) => { const dx = a.x - b.x, dy = a.y - b.y; return dx * dx + dy * dy; };
@@ -10,10 +9,10 @@ const len = (x, y) => Math.hypot(x, y) || 1e-9;
 
 // ---------- factories ----------
 
-function makePlayer() {
+function makePlayer(startAmmo) {
   return {
     x: W / 2, y: H / 2, vx: 0, vy: 0, r: 12,
-    aim: 0, ammo: TOTAL_AMMO, hp: 3,
+    aim: 0, ammo: startAmmo, hp: 3,
     iframes: 0, recoilKick: 0, fireCooldown: 0,
   };
 }
@@ -43,11 +42,11 @@ const ENEMY_KINDS = {
   mass:    { r: 26, hp: 4, score: 400, color: "#ff9d3b" },
 };
 
-function makeEnemy(kind, x, y, wave) {
+function makeEnemy(kind, x, y, wave, hpBonus = 0) {
   const def = ENEMY_KINDS[kind];
   return {
     kind, x, y, vx: 0, vy: 0, r: def.r,
-    hp: def.hp, maxHp: def.hp, score: def.score, color: def.color,
+    hp: def.hp + hpBonus, maxHp: def.hp + hpBonus, score: def.score, color: def.color,
     wobble: rand(0, Math.PI * 2), eaten: 0, hitFlash: 0,
     speedBoost: 1 + Math.min(wave * 0.04, 0.8), dead: false,
   };

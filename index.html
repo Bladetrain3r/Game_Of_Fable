@@ -28,12 +28,19 @@
     <p class="tag">eight bullets, forever.</p>
     <div class="rules">
       <p><b>There are no movement keys.</b> Your gun is your engine — every shot kicks you backwards.</p>
-      <p>Every shot drops a casing. The world holds <b>exactly 8 bullets</b> — skate over your spent shells to reload.</p>
+      <p>Every shot drops a casing. The world holds <b>a fixed number of bullets, forever</b> — skate over your spent shells to reload. Difficulty decides how many.</p>
       <p><b>Squares eat your casings.</b> Pop one to get them all back.</p>
       <p>Empty mag? Your shells crawl home to you... slowly. Getting hit hurts, but the knockback is free travel.</p>
     </div>
-    <p class="controls">aim with mouse &nbsp;·&nbsp; click to fire &nbsp;·&nbsp; <kbd>P</kbd> pause &nbsp;·&nbsp; <kbd>M</kbd> mute</p>
-    <p class="go">click to load</p>
+    <p class="controls">aim with mouse &nbsp;·&nbsp; click to fire &nbsp;·&nbsp; <kbd>P</kbd> pause &nbsp;·&nbsp; <kbd>M</kbd> mute &nbsp;·&nbsp; <kbd>Esc</kbd> menu</p>
+    <div id="diffs">
+      <button data-diff="practice">PRACTICE<span>16 shots · no enemies · just fly</span></button>
+      <button data-diff="easy">EASY<span>12 shots · clingy shells · 0.5× score</span></button>
+      <button data-diff="normal">NORMAL<span>8 shots · the real game · 1× score</span></button>
+      <button data-diff="hard">HARD<span>6 shots · 1.5× score</span></button>
+      <button data-diff="suicidal">SUICIDAL<span>4 shots · tougher enemies · 1.5× score</span></button>
+    </div>
+    <p class="controls">or press <kbd>1</kbd>–<kbd>5</kbd></p>
     <p class="best" id="title-best"></p>
   </div>
 
@@ -42,6 +49,7 @@
     <p class="tag" id="death-stats"></p>
     <p class="best" id="death-best"></p>
     <p class="go">click to reload</p>
+    <p class="controls"><kbd>Esc</kbd> for the menu</p>
   </div>
 
   <div id="pause" class="screen hidden">

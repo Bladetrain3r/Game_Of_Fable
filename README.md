@@ -3,7 +3,7 @@
 *eight bullets, forever.*
 
 A top-down arena shooter where **your gun is your only engine** and **the world
-contains exactly eight bullets** — total, permanent, conserved.
+contains a fixed handful of bullets** — total, permanent, conserved.
 
 **[Play it: open `index.html`. That's the whole install.]**
 
@@ -14,9 +14,9 @@ Three rules, each of which fights the other two:
 1. **There are no movement keys.** Every shot kicks you backwards. Recoil is
    locomotion. You aim where you *don't* want to go.
 2. **Every shot ejects a casing onto the floor, and casings are the only ammo
-   in the world.** Eight shells, conserved across the whole run. Skate over
-   your spent brass to reload — which means shooting to survive propels you
-   *away* from your own ammo supply.
+   in the world.** Eight shells on Normal, conserved across the whole run.
+   Skate over your spent brass to reload — which means shooting to survive
+   propels you *away* from your own ammo supply.
 3. **The purple squares don't want you. They want your brass.** Magnets vacuum
    casings off the floor and carry them around inside. Pop one and it refunds
    everything it swallowed. Your economy can be taken hostage.
@@ -34,11 +34,28 @@ Two pressure valves keep it fair instead of frustrating:
 |-------|--------|
 | Mouse | Aim |
 | Click / hold | Fire (and therefore: move) |
+| `1`–`5` | Pick a difficulty from the menu |
 | `P` | Pause |
 | `M` | Mute |
+| `Esc` | Back to the menu |
 
 Kills chain into a combo (up to ×8). Kills made while moving fast pay a 50%
 **HOT** bonus — the game pays you to stay reckless.
+
+## Difficulties
+
+Harder never means "less ammo appears" — it means the universe holds fewer
+bullets. Conservation is sacred in every mode.
+
+| Mode | Shells | Twist | Score |
+|------|--------|-------|-------|
+| Practice | 16 | No enemies; a recoil-flight sandbox with an odometer | — |
+| Easy | 12 | Shells start crawling home at 1 round remaining | 0.5× |
+| Normal | 8 | The real game | 1× |
+| Hard | 6 | | 1.5× |
+| Suicidal | 4 | All enemies +1 HP | 1.5× |
+
+Best scores are tracked per difficulty.
 
 ## Enemies
 
