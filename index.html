@@ -39,14 +39,16 @@
       <button data-diff="normal">NORMAL<span>8 shots · the real game · 1× score</span></button>
       <button data-diff="hard">HARD<span>6 shots · 1.5× score</span></button>
       <button data-diff="suicidal">SUICIDAL<span>4 shots · tougher enemies · 1.5× score</span></button>
+      <button data-diff="daily">DAILY<span>8 shots · same spawns for everyone · resets with the board</span></button>
     </div>
-    <p class="controls">or press <kbd>1</kbd>–<kbd>5</kbd></p>
+    <p class="controls">or press <kbd>1</kbd>–<kbd>6</kbd> &nbsp;·&nbsp; touch works: tap to fire</p>
     <p class="best" id="title-best"></p>
   </div>
 
   <div id="death" class="screen hidden">
     <h1>SPENT</h1>
     <p class="tag" id="death-stats"></p>
+    <p class="best" id="death-stats2"></p>
     <p class="best" id="death-best"></p>
     <div id="entry" class="hidden">
       <p class="tag" id="entry-msg">you made the board — initials?</p>
@@ -65,6 +67,7 @@
 </div>
 
 <script src="js/audio.js"></script>
+<script src="js/music.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/render.js"></script>
 <script src="js/pickups.js"></script>

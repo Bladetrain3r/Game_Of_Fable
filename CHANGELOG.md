@@ -5,25 +5,39 @@ All notable changes to DRYFIRE will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Roadmap
+## Status: FEATURE FROZEN
 
-Three patches reserved; v1.5 is the final game. Every addition is weighed
-against the core: one gun, N bullets, forever. Conservation stays sacred —
-nothing on this list creates ammo. Out of scope on principle: bosses,
-weapon variety, upgrade meta.
+v1.5 is the final game as planned. The core — one gun, one magazine, and
+Newton's laws — is complete. Anything beyond this point would be a 2.0.
 
-### Reserved — v1.5 "The Encore"
+## [1.5.0] - 2026-06-11 — "The Encore"
 
-- [ ] Procedurally generated ambient bliptune (WebAudio, zero assets):
-      pentatonic random walk over a slow pad, reactive to game state —
-      busier with combo, *tenser* on low ammo. The soundtrack as a
-      tension gauge you hear instead of read
-- [ ] Daily seed mode: wave RNG seeded by the date, posted to the board
-      with a `daily` tag — the existing cron wipe becomes a daily
-      challenge reset where everyone faced the same spawns
-- [ ] Death-screen stats: accuracy, distance flown
-- [ ] Touch support (tap to fire — the one-button game gets it nearly free)
-- [ ] Feature freeze
+### Added
+
+- Procedurally generated ambient bliptune (`js/music.js`, WebAudio, zero
+  assets): a pentatonic random walk over a slow detuned drone, never the
+  same twice. Reactive to game state — combo and wave make it busier; a
+  starving magazine makes it *tenser* (faster steps, an octave climb, a
+  ticking pulse). The soundtrack is a tension gauge you hear instead of
+  read. `M` mutes it along with everything else
+- **Daily mode** (6th difficulty): normal rules, but wave composition,
+  spawn positions, and telegraph timings are drawn from a date-seeded RNG
+  (UTC) — everyone on the board faced the same spawns. Posts to the board
+  with a `daily` tag, so the daily cron wipe doubles as the challenge
+  reset. Daily spawns skip the away-from-player rule (it would break
+  determinism); the telegraph is your warning
+- Death-screen stats: shot accuracy and distance flown (an overpressure
+  multi-kill can legitimately exceed 100%)
+- Touch support: input moved from mouse to pointer events, so tap-to-fire
+  just works — the one-button game got mobile controls nearly free
+- Servlet accepts the `daily` difficulty tag (redeploy `hiscore_server.py`)
+
+### Changed
+
+- Title screen difficulty select is now a two-column grid (six modes);
+  number keys `1`–`6`
+- Board UI moved from `js/main.js` into `js/scores.js`, keeping every file
+  under the 500-line law
 
 ## [1.4.0] - 2026-06-11 — "The Arsenal"
 
