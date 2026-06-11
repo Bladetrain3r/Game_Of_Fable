@@ -40,7 +40,15 @@ const ENEMY_KINDS = {
   magnet:  { r: 16, hp: 2, score: 250, color: "#b07cff" },
   // Hexagon: slow wall of meat that soaks hits and blocks lanes.
   mass:    { r: 26, hp: 4, score: 400, color: "#ff9d3b" },
+  // Pentagon: frontal shield eats bullets. Only killable from behind —
+  // a recoil-piloting exam, since flying is the only way to flank.
+  warden:  { r: 14, hp: 2, score: 350, color: "#4dff88" },
+  // Diamond: keeps its distance and spits energy bolts. Bolts are NOT brass
+  // and never pickupable — enemy fire stays outside the ammo economy.
+  shrike:  { r: 12, hp: 1, score: 300, color: "#ff4fd8" },
 };
+
+const SHIELD_ARC = 1.2;      // warden shield half-angle, radians (~69° each side)
 
 function makeEnemy(kind, x, y, wave, hpBonus = 0) {
   const def = ENEMY_KINDS[kind];
@@ -48,8 +56,14 @@ function makeEnemy(kind, x, y, wave, hpBonus = 0) {
     kind, x, y, vx: 0, vy: 0, r: def.r,
     hp: def.hp + hpBonus, maxHp: def.hp + hpBonus, score: def.score, color: def.color,
     wobble: rand(0, Math.PI * 2), eaten: 0, hitFlash: 0,
+    facing: rand(0, Math.PI * 2), fire: rand(1.6, 2.8), windup: 0,
+    strafeDir: Math.random() < 0.5 ? -1 : 1,
     speedBoost: 1 + Math.min(wave * 0.04, 0.8), dead: false,
   };
+}
+
+function makeEnemyShot(x, y, angle) {
+  return { x, y, vx: Math.cos(angle) * 270, vy: Math.sin(angle) * 270, r: 6, life: 5, dead: false };
 }
 
 function makeParticle(x, y, color, speed, life) {
@@ -133,6 +147,17 @@ function nearestSettledCasing(e, casings) {
   return best;
 }
 
+const angleDiff = (a, b) => {
+  let d = a - b;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return d;
+};
+
+// True if a point (e.g. a bullet) is inside the warden's frontal shield arc.
+const shieldBlocks = (e, x, y) =>
+  Math.abs(angleDiff(Math.atan2(y - e.y, x - e.x), e.facing)) < SHIELD_ARC;
+
 // Returns events the game loop reacts to (sounds, score, floaters).
 function updateEnemies(enemies, casings, p, dt, events) {
   for (const e of enemies) {
@@ -140,7 +165,30 @@ function updateEnemies(enemies, casings, p, dt, events) {
     e.wobble += dt * 5;
     const boost = e.speedBoost;
 
-    if (e.kind === "drifter") {
+    if (e.kind === "warden") {
+      // Shield tracks you, but the turn rate is beatable with a good recoil arc.
+      const want = Math.atan2(p.y - e.y, p.x - e.x);
+      const turn = 2.2 * dt;
+      e.facing += Math.max(-turn, Math.min(turn, angleDiff(want, e.facing)));
+      steerToward(e, p.x, p.y, 72 * boost, dt, 3);
+    } else if (e.kind === "shrike") {
+      // Hold ~250px range, strafing sideways; wind up, then spit a bolt.
+      const a = Math.atan2(e.y - p.y, e.x - p.x);
+      const tx = p.x + Math.cos(a + e.strafeDir * 0.5) * 250;
+      const ty = p.y + Math.sin(a + e.strafeDir * 0.5) * 250;
+      steerToward(e, tx, ty, 115 * boost, dt, 4);
+      if (e.windup > 0) {
+        e.windup -= dt;
+        if (e.windup <= 0) {
+          e.windup = 0;
+          e.fire = rand(2.2, 3.2);
+          events.push({ type: "shoot", x: e.x, y: e.y, a: Math.atan2(p.y - e.y, p.x - e.x) });
+        }
+      } else {
+        e.fire -= dt;
+        if (e.fire <= 0) e.windup = 0.45;
+      }
+    } else if (e.kind === "drifter") {
       const wob = Math.sin(e.wobble) * 60;
       const a = Math.atan2(p.y - e.y, p.x - e.x) + Math.PI / 2;
       steerToward(e, p.x + Math.cos(a) * wob, p.y + Math.sin(a) * wob, 135 * boost, dt);
@@ -159,6 +207,16 @@ function updateEnemies(enemies, casings, p, dt, events) {
       steerToward(e, p.x, p.y, 48 * boost, dt, 2);
     }
     bounceOffWalls(e, 0.6, null);
+  }
+}
+
+function updateEnemyShots(shots, dt) {
+  for (const s of shots) {
+    s.life -= dt;
+    s.x += s.vx * dt; s.y += s.vy * dt;
+    if (s.life <= 0 || s.x < WALL || s.x > W - WALL || s.y < WALL || s.y > H - WALL) {
+      s.dead = true;  // bolts shatter on walls; they're energy, they leave nothing
+    }
   }
 }
 

@@ -71,6 +71,25 @@ function drawEnemies(ctx, enemies, t) {
       const a = Math.atan2(e.vy, e.vx);
       polygon(ctx, e.x, e.y, e.r + 3, 3, a);
       ctx.fill();
+    } else if (e.kind === "warden") {
+      polygon(ctx, e.x, e.y, e.r, 5, e.facing);
+      ctx.fill();
+      ctx.strokeStyle = flash ? "#ffffff" : "#b8ffd2";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.r + 7, e.facing - SHIELD_ARC, e.facing + SHIELD_ARC);
+      ctx.stroke();
+    } else if (e.kind === "shrike") {
+      const a = Math.atan2(e.vy, e.vx);
+      polygon(ctx, e.x, e.y, e.r, 4, a);
+      ctx.fill();
+      if (e.windup > 0) {  // telegraph: a tightening ring before each bolt
+        ctx.strokeStyle = "#ff4fd8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r + 14 * e.windup / 0.45 + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     } else if (e.kind === "magnet") {
       polygon(ctx, e.x, e.y, e.r, 4, t * 1.5 + e.wobble);
       ctx.fill();
@@ -89,6 +108,27 @@ function drawEnemies(ctx, enemies, t) {
       polygon(ctx, e.x, e.y, e.r * (1 - e.hp / e.maxHp) * 0.8, 6, e.wobble * 0.1);
       ctx.fill();  // damage shows as a growing dark core
     }
+    ctx.restore();
+  }
+}
+
+// Enemy bolts: round magenta energy with a short tail. Deliberately nothing
+// like brass — these are never pickups.
+function drawEnemyShots(ctx, shots) {
+  for (const s of shots) {
+    ctx.save();
+    ctx.shadowColor = "#ff4fd8";
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = "rgba(255, 79, 216, 0.4)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(s.x - s.vx * 0.05, s.y - s.vy * 0.05);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+    ctx.fillStyle = "#ff8fe8";
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r - 1, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 }
@@ -174,6 +214,7 @@ function render(ctx, g, t) {
   drawCasings(ctx, g.casings, g.player.ammo === 0, t);
   drawSpawns(ctx, g.spawns, t);
   drawEnemies(ctx, g.enemies, t);
+  drawEnemyShots(ctx, g.eshots);
   drawBullets(ctx, g.bullets);
   drawPlayer(ctx, g.player, t);
   drawParticles(ctx, g.particles);

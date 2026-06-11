@@ -12,15 +12,6 @@ against the core: one gun, N bullets, forever. Conservation stays sacred —
 nothing on this list creates ammo. Out of scope on principle: bosses,
 weapon variety, upgrade meta.
 
-### [Unreleased] — v1.3 "The Menagerie"
-
-- [ ] **Warden** — frontal shield eats bullets; only killable from behind.
-      A recoil-piloting exam: you spend shells to *position*, not just kill
-- [ ] **Shrike** — a shooter. Its projectiles are visually distinct from
-      brass (energy, not casings) and never pickupable; enemy fire stays
-      outside the ammo economy
-- [ ] Wave roster rebalance to weave the new threats in
-
 ### Reserved — v1.4 "The Arsenal"
 
 Utility-only pickups, all temporal, none create ammo. Earned via HOT kills
@@ -43,6 +34,25 @@ and wave clears, rewarding the playstyle scoring already encourages.
 - [ ] Death-screen stats: accuracy, distance flown
 - [ ] Touch support (tap to fire — the one-button game gets it nearly free)
 - [ ] Feature freeze
+
+## [1.3.0] - 2026-06-11 — "The Menagerie"
+
+### Added
+
+- **Warden** (green pentagon) — a tracking frontal shield eats bullets with a
+  clink; only killable from behind. Its turn rate is beatable with a good
+  recoil arc: you spend shells to position, not just to kill. From wave 3
+- **Shrike** (magenta diamond) — holds ~250px range, strafes, and spits
+  energy bolts after a visible wind-up ring. Bolts are round magenta energy,
+  deliberately nothing like brass, never pickupable, and shatter on walls —
+  enemy fire stays entirely outside the ammo economy. From wave 4
+- Two new synthesized sounds: shield clink and bolt fire
+- Title screen rules mention the shield and the bolts
+
+### Changed
+
+- Wave roster rebalanced: drifter count now caps at 10; wardens and shrikes
+  ramp to 3 each by wave 8. Suicidal's +1 enemy HP applies to both newcomers
 
 ## [1.2.0] - 2026-06-10 — "The Leaderboard Update"
 

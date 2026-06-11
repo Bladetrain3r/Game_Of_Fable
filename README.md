@@ -62,6 +62,10 @@ Best scores are tracked per difficulty.
 - **Triangles (drifters)** — fast, wobbling chasers. Fodder that herds you.
 - **Squares (magnets)** — ignore you, eat your casings, grow. Kill = full refund.
 - **Hexagons (mass)** — slow, four hits, soak bullets and block lanes.
+- **Pentagons (wardens)** — a frontal shield eats bullets. Kill from behind;
+  its turn rate loses to a well-flown recoil arc.
+- **Diamonds (shrikes)** — keep their distance and spit energy bolts after a
+  visible wind-up. Bolts are not brass: never pickupable, gone on impact.
 
 ## High score board (optional)
 
