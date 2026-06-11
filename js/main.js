@@ -33,7 +33,7 @@ function newGame(diffKey) {
   return {
     diff, diffKey,
     player: makePlayer(diff.ammo),
-    bullets: [], casings: [], enemies: [], particles: [], floaters: [], spawns: [],
+    bullets: [], casings: [], enemies: [], eshots: [], particles: [], floaters: [], spawns: [],
     trail: [],
     wave: 0, waveTimer: 1.2, betweenWaves: true,
     score: 0, combo: 1, comboTimer: 0, kills: 0,
@@ -158,9 +158,11 @@ function queueWave(g) {
   g.wave++;
   const n = g.wave;
   const roster = [];
-  for (let i = 0; i < 2 + n; i++) roster.push("drifter");
+  for (let i = 0; i < 2 + Math.min(n, 8); i++) roster.push("drifter");
   for (let i = 0; i < Math.min(3, Math.floor(n / 2)); i++) roster.push("magnet");
   for (let i = 0; i < Math.min(2, Math.floor((n - 1) / 3)); i++) roster.push("mass");
+  for (let i = 0; i < Math.min(3, Math.floor((n - 1) / 2)); i++) roster.push("warden");   // wave 3+
+  for (let i = 0; i < Math.min(3, Math.floor((n - 2) / 2)); i++) roster.push("shrike");   // wave 4+
   for (const kind of roster) {
     const pt = spawnPointAwayFromPlayer(g.player);
     g.spawns.push({ kind, x: pt.x, y: pt.y, timer: rand(0.9, 1.6), total: 1.6 });
@@ -313,6 +315,11 @@ function collide(g) {
       const rr = b.r + e.r;
       if (dist2(b, e) < rr * rr) {
         b.dead = true;
+        if (e.kind === "warden" && shieldBlocks(e, b.x, b.y)) {
+          burst(g, b.x, b.y, "#b8ffd2", 6, 200);
+          Audio_.play("clink");
+          break;  // shield ate it; the casing already fell where you fired
+        }
         e.hp--;
         e.hitFlash = 1;
         e.vx += (b.vx / 950) * 160; e.vy += (b.vy / 950) * 160;  // bullets shove
@@ -338,6 +345,16 @@ function collide(g) {
     if (e.dead) continue;
     const rr = p.r + e.r;
     if (dist2(p, e) < rr * rr) hurtPlayer(g, e);
+  }
+  // player vs enemy bolts (they pass through during i-frames rather than vanish)
+  for (const s of g.eshots) {
+    if (s.dead || p.iframes > 0) continue;
+    const rr = p.r + s.r;
+    if (dist2(p, s) < rr * rr) {
+      s.dead = true;
+      burst(g, s.x, s.y, "#ff4fd8", 8, 220);
+      hurtPlayer(g, s);
+    }
   }
 }
 
@@ -387,7 +404,9 @@ function update(g, dt) {
   updateEnemies(g.enemies, g.casings, p, dt, events);
   for (const ev of events) {
     if (ev.type === "eat") { Audio_.play("eat"); burst(g, ev.x, ev.y, "#b07cff", 6, 150); }
+    if (ev.type === "shoot") { g.eshots.push(makeEnemyShot(ev.x, ev.y, ev.a)); Audio_.play("eshoot"); }
   }
+  updateEnemyShots(g.eshots, dt);
 
   updateSpawns(g, dt);
   updateParticles(g.particles, dt);
@@ -408,6 +427,7 @@ function update(g, dt) {
   sweepDead(g.bullets);
   sweepDead(g.casings);
   sweepDead(g.enemies);
+  sweepDead(g.eshots);
   sweepDead(g.particles);
   sweepDead(g.floaters);
   updateHud(g);

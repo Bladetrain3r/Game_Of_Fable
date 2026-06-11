@@ -66,6 +66,8 @@ const Audio_ = (() => {
     refund()  { for (let i = 0; i < 4; i++) tone("sine", 800 + i * 250, 1200 + i * 250, 0.08, 0.2, i * 0.05); },
     hurt()    { tone("sawtooth", 300, 60, 0.3, 0.55); noise(0.2, 0.4, 900); },
     eat()     { tone("sawtooth", 200, 90, 0.15, 0.3); },
+    clink()   { tone("triangle", 2200, 1400, 0.06, 0.3); tone("square", 3100, 2400, 0.04, 0.12, 0.01); },
+    eshoot()  { tone("sawtooth", 650, 180, 0.16, 0.22); },
     wave()    { tone("square", 220, 220, 0.1, 0.3); tone("square", 330, 330, 0.12, 0.3, 0.13); },
     bounce()  { tone("triangle", 140, 90, 0.07, 0.18); },
     die()     { tone("sawtooth", 240, 30, 0.9, 0.6); noise(0.6, 0.5, 700, 0.1); },
