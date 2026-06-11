@@ -35,6 +35,13 @@ and wave clears, rewarding the playstyle scoring already encourages.
 - [ ] Touch support (tap to fire — the one-button game gets it nearly free)
 - [ ] Feature freeze
 
+## [1.3.1] - 2026-06-11
+
+### Changed
+
+- Warden shield turn rate halved (2.2 → 1.1 rad/s): getting behind one is now
+  a flying maneuver rather than a coin-flip with its contact damage
+
 ## [1.3.0] - 2026-06-11 — "The Menagerie"
 
 ### Added

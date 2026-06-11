@@ -166,9 +166,10 @@ function updateEnemies(enemies, casings, p, dt, events) {
     const boost = e.speedBoost;
 
     if (e.kind === "warden") {
-      // Shield tracks you, but the turn rate is beatable with a good recoil arc.
+      // Shield tracks you slowly — a committed recoil arc gets behind it
+      // with time to line up the shot, but a lazy orbit doesn't.
       const want = Math.atan2(p.y - e.y, p.x - e.x);
-      const turn = 2.2 * dt;
+      const turn = 1.1 * dt;
       e.facing += Math.max(-turn, Math.min(turn, angleDiff(want, e.facing)));
       steerToward(e, p.x, p.y, 72 * boost, dt, 3);
     } else if (e.kind === "shrike") {
