@@ -12,13 +12,16 @@ const len = (x, y) => Math.hypot(x, y) || 1e-9;
 function makePlayer(startAmmo) {
   return {
     x: W / 2, y: H / 2, vx: 0, vy: 0, r: 12,
-    aim: 0, ammo: startAmmo, hp: 3,
+    aim: 0, ammo: startAmmo, hp: 3, overpressure: false,
     iframes: 0, recoilKick: 0, fireCooldown: 0,
   };
 }
 
 function makeBullet(x, y, angle) {
-  return { x, y, vx: Math.cos(angle) * 950, vy: Math.sin(angle) * 950, r: 4, dead: false };
+  return {
+    x, y, vx: Math.cos(angle) * 950, vy: Math.sin(angle) * 950, r: 4,
+    pierce: false, hits: null, dead: false,
+  };
 }
 
 // Casings eject out the side port, inheriting some player velocity.
@@ -109,9 +112,9 @@ function updateBullets(bullets, dt) {
   }
 }
 
-// Settled casings are inert ammo. When the player is bone dry, the nearest
-// shells crawl home — slow enough to be terrifying, sure enough to never softlock.
-function updateCasings(casings, p, dt, playerEmpty) {
+// Settled casings are inert ammo, unless something makes them crawl home:
+// the empty-mag mercy (slow, terrifying, softlock-proof) or a lodestone (fast).
+function updateCasings(casings, p, dt, crawlSpeed) {
   for (const c of casings) {
     c.age += dt;
     if (!c.settled) {
@@ -121,9 +124,9 @@ function updateCasings(casings, p, dt, playerEmpty) {
       c.spin += dt * 10;
       bounceOffWalls(c, 0.5, null);
       if (len(c.vx, c.vy) < 10 && c.age > 0.25) c.settled = true;
-    } else if (playerEmpty) {
+    } else if (crawlSpeed > 0) {
       const dx = p.x - c.x, dy = p.y - c.y, d = len(dx, dy);
-      const crawl = 70 * dt;
+      const crawl = crawlSpeed * dt;
       c.x += (dx / d) * crawl; c.y += (dy / d) * crawl;
     }
   }

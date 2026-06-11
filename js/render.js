@@ -147,8 +147,8 @@ function drawPlayer(ctx, p, t) {
   ctx.moveTo(14, 0); ctx.lineTo(-10, 9); ctx.lineTo(-5, 0); ctx.lineTo(-10, -9);
   ctx.closePath();
   ctx.fill();
-  // barrel
-  ctx.fillStyle = p.ammo > 0 ? "#ffc843" : "#5a6577";
+  // barrel: white-hot when overpressure is chambered
+  ctx.fillStyle = p.overpressure ? "#ffffff" : p.ammo > 0 ? "#ffc843" : "#5a6577";
   ctx.fillRect(8, -2, 12, 4);
   ctx.restore();
 
@@ -211,7 +211,8 @@ function render(ctx, g, t) {
   }
   drawArena(ctx, t);
   drawTrail(ctx, g.trail);
-  drawCasings(ctx, g.casings, g.player.ammo === 0, t);
+  drawCasings(ctx, g.casings, g.player.ammo === 0 || g.lodestone > 0, t);
+  drawPickups(ctx, g.pickups, t);
   drawSpawns(ctx, g.spawns, t);
   drawEnemies(ctx, g.enemies, t);
   drawEnemyShots(ctx, g.eshots);

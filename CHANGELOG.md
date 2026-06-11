@@ -12,16 +12,6 @@ against the core: one gun, N bullets, forever. Conservation stays sacred —
 nothing on this list creates ammo. Out of scope on principle: bosses,
 weapon variety, upgrade meta.
 
-### Reserved — v1.4 "The Arsenal"
-
-Utility-only pickups, all temporal, none create ammo. Earned via HOT kills
-and wave clears, rewarding the playstyle scoring already encourages.
-
-- [ ] **Lodestone** — for ~5s every floor shell crawls to you (the
-      empty-mag mercy, weaponized as a reward)
-- [ ] **Overpressure** — next shot pierces and double-kicks
-- [ ] **Patch kit** — one heart back; rare, wave-clear only
-
 ### Reserved — v1.5 "The Encore"
 
 - [ ] Procedurally generated ambient bliptune (WebAudio, zero assets):
@@ -34,6 +24,25 @@ and wave clears, rewarding the playstyle scoring already encourages.
 - [ ] Death-screen stats: accuracy, distance flown
 - [ ] Touch support (tap to fire — the one-button game gets it nearly free)
 - [ ] Feature freeze
+
+## [1.4.0] - 2026-06-11 — "The Arsenal"
+
+### Added
+
+- Pickups (`js/pickups.js`): utility-only, all temporal, none create ammo —
+  conservation stays sacred
+- **Lodestone** (cyan ring) — for 5s every floor shell sprints to you at
+  260 px/s; the empty-mag mercy, weaponized as a reward
+- **Overpressure** (white star) — the next shot pierces everything, warden
+  shields included, hitting each enemy once, and kicks nearly twice as hard.
+  The barrel glows white while it's chambered
+- **Patch kit** (red cross) — one heart back, capped at 3; wave-clear only,
+  favored when you're hurting
+- Drop sources: HOT kills roll a 15% chance at the kill site; wave clears
+  roll a drop at a random arena spot. At most 2 pickups on the floor;
+  uncollected ones expire after 12s with a warning blink
+- HUD status tags (overpressure armed, lodestone countdown) share the combo
+  line; three new synthesized sounds (overpressure shot, power-up, heal)
 
 ## [1.3.1] - 2026-06-11
 
