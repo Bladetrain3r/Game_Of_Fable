@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 v1.5 is the final game as planned. The core — one gun, one magazine, and
 Newton's laws — is complete. Anything beyond this point would be a 2.0.
 
+## [1.5.1] - 2026-06-11
+
+### Fixed
+
+- Stale-cache deploys: stylesheet and script URLs now carry a `?v=` version
+  stamp, so browsers fetch fresh assets when the HTML changes instead of
+  serving yesterday's CSS with today's markup. Bump the stamp alongside any
+  future asset change
+
 ## [1.5.0] - 2026-06-11 — "The Encore"
 
 ### Added
