@@ -90,6 +90,17 @@ python3 server/hiscore_server.py 8002 /path/to/webroot/hiscores.txt
 - The servlet validates everything and answers `200` with
   `qualified: false` for honest scores that miss the cut.
 
+## Pickups
+
+Utility only — **no pickup ever creates ammo.** HOT kills can drop one where
+the body fell; wave clears can drop one somewhere awkward. Two on the floor
+max, and they expire if ignored.
+
+- **Lodestone** (cyan ring) — for 5 seconds every floor shell sprints to you.
+- **Overpressure** (white star) — next shot pierces everything (shields
+  included) and kicks nearly twice as hard. Watch the barrel glow.
+- **Patch kit** (red cross) — one heart back. Rare, wave-clear only.
+
 ## Running it
 
 It's a static site with zero dependencies and zero build step:

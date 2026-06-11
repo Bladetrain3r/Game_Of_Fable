@@ -33,8 +33,8 @@ function newGame(diffKey) {
   return {
     diff, diffKey,
     player: makePlayer(diff.ammo),
-    bullets: [], casings: [], enemies: [], eshots: [], particles: [], floaters: [], spawns: [],
-    trail: [],
+    bullets: [], casings: [], enemies: [], eshots: [], pickups: [], particles: [], floaters: [], spawns: [],
+    trail: [], lodestone: 0,
     wave: 0, waveTimer: 1.2, betweenWaves: true,
     score: 0, combo: 1, comboTimer: 0, kills: 0,
     dist: 0, shake: 0,
@@ -134,14 +134,19 @@ function tryFire(g) {
   p.fireCooldown = FIRE_COOLDOWN;
   if (p.ammo <= 0) { Audio_.play("dry"); return; }
 
+  const op = p.overpressure;
+  p.overpressure = false;
   p.ammo--;
-  g.bullets.push(makeBullet(p.x + Math.cos(p.aim) * 18, p.y + Math.sin(p.aim) * 18, p.aim));
+  const b = makeBullet(p.x + Math.cos(p.aim) * 18, p.y + Math.sin(p.aim) * 18, p.aim);
+  if (op) { b.pierce = true; b.hits = []; }
+  g.bullets.push(b);
   g.casings.push(makeCasing(p, p.aim));
-  p.vx -= Math.cos(p.aim) * RECOIL;
-  p.vy -= Math.sin(p.aim) * RECOIL;
-  p.recoilKick = 1;
-  g.shake = Math.min(1, g.shake + 0.25);
-  Audio_.play("shot");
+  const kick = RECOIL * (op ? 1.9 : 1);
+  p.vx -= Math.cos(p.aim) * kick;
+  p.vy -= Math.sin(p.aim) * kick;
+  p.recoilKick = op ? 1.6 : 1;
+  g.shake = Math.min(1, g.shake + (op ? 0.6 : 0.25));
+  Audio_.play(op ? "overshot" : "shot");
 }
 
 // ---------- waves ----------
@@ -198,6 +203,7 @@ function killEnemy(g, e) {
   g.combo = Math.min(8, g.combo + 1);
   g.comboTimer = COMBO_WINDOW;
   g.floaters.push(makeFloater(e.x, e.y, (hot ? "HOT " : "") + points, hot ? "#ffc843" : "#cdd6e4"));
+  if (hot) rollHotDrop(g, e.x, e.y);
   burst(g, e.x, e.y, e.color, e.kind === "mass" ? 26 : 14, 260);
   g.shake = Math.min(1, g.shake + (e.kind === "mass" ? 0.6 : 0.3));
   Audio_.play(e.kind === "mass" ? "bigpop" : "pop");
@@ -314,18 +320,23 @@ function collide(g) {
       if (e.dead) continue;
       const rr = b.r + e.r;
       if (dist2(b, e) < rr * rr) {
-        b.dead = true;
-        if (e.kind === "warden" && shieldBlocks(e, b.x, b.y)) {
-          burst(g, b.x, b.y, "#b8ffd2", 6, 200);
-          Audio_.play("clink");
-          break;  // shield ate it; the casing already fell where you fired
+        if (b.pierce) {
+          if (b.hits.includes(e)) continue;  // overpressure punches through, once each
+          b.hits.push(e);
+        } else {
+          b.dead = true;
+          if (e.kind === "warden" && shieldBlocks(e, b.x, b.y)) {
+            burst(g, b.x, b.y, "#b8ffd2", 6, 200);
+            Audio_.play("clink");
+            break;  // shield ate it; the casing already fell where you fired
+          }
         }
         e.hp--;
         e.hitFlash = 1;
         e.vx += (b.vx / 950) * 160; e.vy += (b.vy / 950) * 160;  // bullets shove
         if (e.hp <= 0) killEnemy(g, e);
         else { burst(g, b.x, b.y, "#ffffff", 5, 180); Audio_.play("pop"); }
-        break;
+        if (!b.pierce) break;
       }
     }
   }
@@ -375,7 +386,11 @@ function updateHud(g) {
   }
   if (g.diff.enemies) {
     $("score").textContent = g.score;
-    $("combo").textContent = g.combo > 1 ? `x${g.combo} combo` : "";
+    const tags = [];
+    if (p.overpressure) tags.push("OVERPRESSURE");
+    if (g.lodestone > 0) tags.push(`lodestone ${Math.ceil(g.lodestone)}`);
+    if (g.combo > 1) tags.push(`x${g.combo} combo`);
+    $("combo").textContent = tags.join(" · ");
     const waveText = g.betweenWaves && g.wave > 0 ? "wave cleared" : `wave ${g.wave}`;
     $("wave").textContent = `${waveText} · ${g.diff.label}`;
   } else {  // practice: a recoil-flight odometer instead of a score
@@ -398,7 +413,9 @@ function update(g, dt) {
   if (g.trail.length > 18) g.trail.shift();
 
   updateBullets(g.bullets, dt);
-  updateCasings(g.casings, p, dt, p.ammo <= g.diff.attractAt && g.bullets.length === 0);
+  g.lodestone = Math.max(0, g.lodestone - dt);
+  const mercy = p.ammo <= g.diff.attractAt && g.bullets.length === 0;
+  updateCasings(g.casings, p, dt, g.lodestone > 0 ? LODESTONE_CRAWL : mercy ? 70 : 0);
 
   const events = [];
   updateEnemies(g.enemies, g.casings, p, dt, events);
@@ -407,6 +424,11 @@ function update(g, dt) {
     if (ev.type === "shoot") { g.eshots.push(makeEnemyShot(ev.x, ev.y, ev.a)); Audio_.play("eshoot"); }
   }
   updateEnemyShots(g.eshots, dt);
+
+  updatePickups(g.pickups, p, dt, events);
+  for (const ev of events) {
+    if (ev.type === "collect") applyPickup(g, ev.kind, ev.x, ev.y);
+  }
 
   updateSpawns(g, dt);
   updateParticles(g.particles, dt);
@@ -419,7 +441,11 @@ function update(g, dt) {
 
   // wave pacing
   if (g.diff.enemies && g.enemies.length === 0 && g.spawns.length === 0) {
-    if (!g.betweenWaves) { g.betweenWaves = true; g.waveTimer = 2.2; }
+    if (!g.betweenWaves) {
+      g.betweenWaves = true;
+      g.waveTimer = 2.2;
+      if (g.wave > 0) rollWaveDrop(g);
+    }
     g.waveTimer -= dt;
     if (g.waveTimer <= 0) { g.betweenWaves = false; queueWave(g); }
   }
@@ -428,6 +454,7 @@ function update(g, dt) {
   sweepDead(g.casings);
   sweepDead(g.enemies);
   sweepDead(g.eshots);
+  sweepDead(g.pickups);
   sweepDead(g.particles);
   sweepDead(g.floaters);
   updateHud(g);
