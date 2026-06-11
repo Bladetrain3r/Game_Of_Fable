@@ -29,7 +29,7 @@ MAX_ENTRIES = 10
 MAX_SCORE = 99_999_999
 MAX_BODY = 4096
 INITIALS_RE = re.compile(r"^[A-Z0-9]{1,3}$")
-DIFFICULTIES = {"easy", "normal", "hard", "suicidal"}
+DIFFICULTIES = {"easy", "normal", "hard", "suicidal", "daily"}
 
 
 def load():

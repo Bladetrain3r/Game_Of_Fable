@@ -33,11 +33,11 @@ Two pressure valves keep it fair instead of frustrating:
 
 | Input | Action |
 |-------|--------|
-| Mouse | Aim |
-| Click / hold | Fire (and therefore: move) |
-| `1`–`5` | Pick a difficulty from the menu |
+| Mouse / touch | Aim |
+| Click / hold / tap | Fire (and therefore: move) |
+| `1`–`6` | Pick a difficulty from the menu |
 | `P` | Pause |
-| `M` | Mute |
+| `M` | Mute (music and all) |
 | `Esc` | Back to the menu |
 
 Kills chain into a combo (up to ×8). Kills made while moving fast pay a 50%
@@ -55,8 +55,17 @@ bullets. Conservation is sacred in every mode.
 | Normal | 8 | The real game | 1× |
 | Hard | 6 | | 1.5× |
 | Suicidal | 4 | All enemies +1 HP | 1.5× |
+| Daily | 8 | Date-seeded spawns: everyone faces the same world today | 1× |
 
 Best scores are tracked per difficulty.
+
+## Music
+
+There is a soundtrack, and it was never composed: a pentatonic random walk
+over a slow drone, generated note by note at runtime. It listens to the
+game — combos make it busier, and a near-empty magazine makes it faster,
+higher, and twitchier. If the music is making you nervous, that's your
+ammo counter talking.
 
 ## Enemies
 
@@ -117,8 +126,9 @@ python3 -m http.server             # or any static server
 Built Magic Launcher style:
 
 - **No frameworks, no libraries, no build, no assets.** Vanilla JS, Canvas 2D,
-  WebAudio (every sound is synthesized at runtime), CSS for the menus.
-- **Every file under 500 lines** (largest is `js/main.js` at ~300).
+  WebAudio (every sound and the entire soundtrack synthesized at runtime),
+  CSS for the menus.
+- **Every file under 500 lines** (largest is `js/main.js` at ~480).
 - **Composition over inheritance:** entities are plain objects made by factory
   functions; behavior lives in small update systems that operate on them.
   There is not a single `class` in the codebase.
@@ -128,6 +138,10 @@ Built Magic Launcher style:
 | `index.html` | Shell, HUD, title/death/pause screens |
 | `style.css` | Theme |
 | `js/audio.js` | Synthesized SFX (WebAudio, no files) |
+| `js/music.js` | Procgen reactive ambient bliptune |
 | `js/entities.js` | Factories + update systems (physics, AI, conservation) |
+| `js/pickups.js` | The arsenal: drops, effects, drawing |
 | `js/render.js` | Pure draw functions |
+| `js/scores.js` | Leaderboard client + board UI |
 | `js/main.js` | Game state, input, firing, collisions, waves |
+| `server/hiscore_server.py` | Optional stdlib-only score servlet |

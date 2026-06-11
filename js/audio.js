@@ -83,5 +83,7 @@ const Audio_ = (() => {
     },
     toggleMute() { muted = !muted; return muted; },
     unlock() { ensure(); },
+    get muted() { return muted; },
+    context() { return ensure() ? { ctx, master } : null; },  // shared with Music
   };
 })();

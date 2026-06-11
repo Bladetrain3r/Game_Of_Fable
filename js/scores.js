@@ -80,3 +80,69 @@ const Scores = (() => {
     get board() { return board; },
   };
 })();
+
+// ---------- board UI (death screen) ----------
+// References main.js globals (game, state) at call time only.
+
+const byId = (id) => document.getElementById(id);
+
+function renderBoard(highlight) {
+  const el = byId("board");
+  el.innerHTML = "";
+  for (const e of Scores.board) {
+    const li = document.createElement("li");
+    for (const [cls, text] of [["ini", e.initials], ["pts", e.score], ["dif", e.diff]]) {
+      const span = document.createElement("span");
+      span.className = cls;
+      span.textContent = text;
+      li.appendChild(span);
+    }
+    if (highlight && e.initials === highlight.initials && e.score === highlight.score) {
+      li.classList.add("fresh");
+      highlight = null;  // only flag the first match
+    }
+    el.appendChild(li);
+  }
+  el.classList.toggle("hidden", Scores.board.length === 0);
+}
+
+async function setupDeathBoard(g) {
+  byId("entry").classList.add("hidden");
+  byId("board").classList.add("hidden");
+  await Scores.refresh();
+  if (state !== "dead" || game !== g) return;  // player already moved on
+  if (!Scores.enabled) return;
+  renderBoard(null);
+  if (g.diff.scoreMult > 0 && Scores.qualifies(g.score)) {
+    byId("entry-msg").textContent = "you made the board — initials?";
+    const input = byId("initials");
+    input.value = "";
+    input.disabled = false;
+    byId("entry").classList.remove("hidden");
+    input.focus();
+  }
+}
+
+const initialsInput = byId("initials");
+initialsInput.addEventListener("input", () => {
+  initialsInput.value = initialsInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+});
+initialsInput.addEventListener("keydown", async (ev) => {
+  ev.stopPropagation();  // typing must not trigger global shortcuts (1-6 restarts!)
+  if (ev.key === "Escape") { byId("entry").classList.add("hidden"); return; }
+  if (ev.key !== "Enter" || initialsInput.value.length === 0 || !game) return;
+  const g = game;
+  initialsInput.disabled = true;
+  byId("entry-msg").textContent = "etching it in...";
+  const res = await Scores.submit(initialsInput.value, g.score, g.diffKey);
+  if (state !== "dead" || game !== g) return;
+  byId("entry").classList.add("hidden");
+  if (res.ok) {
+    renderBoard(res.qualified ? { initials: initialsInput.value, score: g.score } : null);
+    if (res.qualified) Audio_.play("refund");
+    byId("death-best").textContent += res.qualified
+      ? ` · board #${res.rank}` : " · sniped off the board";
+  } else {
+    byId("death-best").textContent += " · board unreachable";
+  }
+});

@@ -18,7 +18,25 @@ const DIFFICULTIES = {
   normal:   { label: "normal",   ammo: 8,  attractAt: 0, scoreMult: 1,   hpBonus: 0, enemies: true },
   hard:     { label: "hard",     ammo: 6,  attractAt: 0, scoreMult: 1.5, hpBonus: 0, enemies: true },
   suicidal: { label: "suicidal", ammo: 4,  attractAt: 0, scoreMult: 1.5, hpBonus: 1, enemies: true },
+  // Normal rules, but the wave RNG is seeded by today's date: everyone on the
+  // board faced the same spawns, and the daily cron wipe doubles as the reset.
+  daily:    { label: "daily",    ammo: 8,  attractAt: 0, scoreMult: 1,   hpBonus: 0, enemies: true, seeded: true },
 };
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function dailySeed() {  // UTC so the whole board shares one world per day
+  const d = new Date();
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
 
 let game = null;
 let state = "title";         // title | playing | paused | dead
@@ -32,6 +50,8 @@ function newGame(diffKey) {
   const diff = DIFFICULTIES[diffKey];
   return {
     diff, diffKey,
+    rng: diff.seeded ? mulberry32(dailySeed()) : Math.random,
+    shots: 0, hits: 0,
     player: makePlayer(diff.ammo),
     bullets: [], casings: [], enemies: [], eshots: [], pickups: [], particles: [], floaters: [], spawns: [],
     trail: [], lodestone: 0,
@@ -67,8 +87,10 @@ function canvasPos(ev) {
   return { x: (ev.clientX - r.left) * (W / r.width), y: (ev.clientY - r.top) * (H / r.height) };
 }
 
-window.addEventListener("mousemove", (ev) => { mouse = { ...mouse, ...canvasPos(ev) }; });
-window.addEventListener("mousedown", (ev) => {
+// Pointer events cover mouse and touch alike: tap to fire is the whole
+// mobile control scheme, because firing is the whole game.
+window.addEventListener("pointermove", (ev) => { mouse = { ...mouse, ...canvasPos(ev) }; });
+window.addEventListener("pointerdown", (ev) => {
   Audio_.unlock();
   mouse = { ...canvasPos(ev), down: true };
   if (state === "dead") {
@@ -83,7 +105,8 @@ window.addEventListener("mousedown", (ev) => {
     tryFire(game);
   }
 });
-window.addEventListener("mouseup", () => { mouse.down = false; });
+window.addEventListener("pointerup", () => { mouse.down = false; });
+window.addEventListener("pointercancel", () => { mouse.down = false; });
 window.addEventListener("contextmenu", (ev) => ev.preventDefault());
 
 window.addEventListener("keydown", (ev) => {
@@ -137,6 +160,7 @@ function tryFire(g) {
   const op = p.overpressure;
   p.overpressure = false;
   p.ammo--;
+  g.shots++;
   const b = makeBullet(p.x + Math.cos(p.aim) * 18, p.y + Math.sin(p.aim) * 18, p.aim);
   if (op) { b.pierce = true; b.hits = []; }
   g.bullets.push(b);
@@ -169,8 +193,12 @@ function queueWave(g) {
   for (let i = 0; i < Math.min(3, Math.floor((n - 1) / 2)); i++) roster.push("warden");   // wave 3+
   for (let i = 0; i < Math.min(3, Math.floor((n - 2) / 2)); i++) roster.push("shrike");   // wave 4+
   for (const kind of roster) {
-    const pt = spawnPointAwayFromPlayer(g.player);
-    g.spawns.push({ kind, x: pt.x, y: pt.y, timer: rand(0.9, 1.6), total: 1.6 });
+    // Daily runs draw spawns purely from the seeded stream — no player-relative
+    // rejection, or runs would diverge. The telegraph is your warning.
+    const pt = g.diff.seeded
+      ? { x: WALL + 40 + g.rng() * (W - 2 * (WALL + 40)), y: WALL + 40 + g.rng() * (H - 2 * (WALL + 40)) }
+      : spawnPointAwayFromPlayer(g.player);
+    g.spawns.push({ kind, x: pt.x, y: pt.y, timer: 0.9 + g.rng() * 0.7, total: 1.6 });
   }
   Audio_.play("wave");
   g.floaters.push(makeFloater(W / 2, H / 2 - 60, `WAVE ${n}`, "#53e0ff"));
@@ -242,74 +270,13 @@ function endRun(g) {
   const best = Math.max(g.score, Number(localStorage.getItem(bestKey(g.diffKey)) || 0));
   if (g.diff.scoreMult > 0) localStorage.setItem(bestKey(g.diffKey), String(best));
   $("death-stats").textContent = `${g.score} pts · ${g.diff.label} · wave ${g.wave} · ${g.kills} kills`;
+  const acc = g.shots > 0 ? Math.round((g.hits / g.shots) * 100) : 0;
+  $("death-stats2").textContent = `${acc}% accuracy · ${Math.round(g.dist / 48)}m flown`;
   $("death-best").textContent = `${g.diff.label} best: ${best}`;
   $("death").classList.remove("hidden");
   $("hud").classList.add("hidden");
   setupDeathBoard(g);
 }
-
-// ---------- online leaderboard (absent on static-only hosting) ----------
-
-function renderBoard(highlight) {
-  const el = $("board");
-  el.innerHTML = "";
-  for (const e of Scores.board) {
-    const li = document.createElement("li");
-    for (const [cls, text] of [["ini", e.initials], ["pts", e.score], ["dif", e.diff]]) {
-      const span = document.createElement("span");
-      span.className = cls;
-      span.textContent = text;
-      li.appendChild(span);
-    }
-    if (highlight && e.initials === highlight.initials && e.score === highlight.score) {
-      li.classList.add("fresh");
-      highlight = null;  // only flag the first match
-    }
-    el.appendChild(li);
-  }
-  el.classList.toggle("hidden", Scores.board.length === 0);
-}
-
-async function setupDeathBoard(g) {
-  $("entry").classList.add("hidden");
-  $("board").classList.add("hidden");
-  await Scores.refresh();
-  if (state !== "dead" || game !== g) return;  // player already moved on
-  if (!Scores.enabled) return;
-  renderBoard(null);
-  if (g.diff.scoreMult > 0 && Scores.qualifies(g.score)) {
-    $("entry-msg").textContent = "you made the board — initials?";
-    const input = $("initials");
-    input.value = "";
-    input.disabled = false;
-    $("entry").classList.remove("hidden");
-    input.focus();
-  }
-}
-
-const initialsInput = $("initials");
-initialsInput.addEventListener("input", () => {
-  initialsInput.value = initialsInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
-});
-initialsInput.addEventListener("keydown", async (ev) => {
-  ev.stopPropagation();  // typing must not trigger global shortcuts (1-5 restarts!)
-  if (ev.key === "Escape") { $("entry").classList.add("hidden"); return; }
-  if (ev.key !== "Enter" || initialsInput.value.length === 0 || !game) return;
-  const g = game;
-  initialsInput.disabled = true;
-  $("entry-msg").textContent = "etching it in...";
-  const res = await Scores.submit(initialsInput.value, g.score, g.diffKey);
-  if (state !== "dead" || game !== g) return;
-  $("entry").classList.add("hidden");
-  if (res.ok) {
-    renderBoard(res.qualified ? { initials: initialsInput.value, score: g.score } : null);
-    if (res.qualified) Audio_.play("refund");
-    $("death-best").textContent += res.qualified
-      ? ` · board #${res.rank}` : " · sniped off the board";
-  } else {
-    $("death-best").textContent += " · board unreachable";
-  }
-});
 
 function collide(g) {
   const p = g.player;
@@ -332,6 +299,7 @@ function collide(g) {
           }
         }
         e.hp--;
+        g.hits++;
         e.hitFlash = 1;
         e.vx += (b.vx / 950) * 160; e.vy += (b.vy / 950) * 160;  // bullets shove
         if (e.hp <= 0) killEnemy(g, e);
@@ -467,6 +435,14 @@ function frame(time) {
   if (state === "playing") update(game, dt);
   if (game) render(ctx, game, elapsed);
   else drawArena(ctx, elapsed);
+  if (game && state === "playing") {
+    const p = game.player;
+    const tension = Math.max(1 - p.ammo / game.diff.ammo, p.hp === 1 ? 0.5 : 0);
+    const intensity = Math.min(1, ((game.combo - 1) / 7) * 0.6 + (Math.min(game.wave, 10) / 10) * 0.4);
+    Music.update(true, game.diff.enemies ? tension : tension * 0.4, intensity);
+  } else {
+    Music.update(false, 0, 0);
+  }
   requestAnimationFrame(frame);
 }
 
